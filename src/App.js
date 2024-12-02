@@ -1,25 +1,125 @@
-import logo from './logo.svg';
-import './App.css';
+import { Routes, Route, Link } from "react-router-dom";
+import "./App.css";
+import Home from "./pages/Home";
+import New from "./pages/New";
+import Edit from "./pages/Edit";
+import Diary from "./pages/Diary";
+import React, { useReducer, useRef, useEffect, useState } from "react";
+
+
+//일기 데이터 관리 State 
+function reducer(state, action) {
+  switch (action.type) {
+    case "INIT": {
+      return action.data;
+    }
+    case "CREATE": {
+      return [action.data, ...state];
+    }
+    case "UPDATE": {
+      return state.map((it) =>
+        String(it.id) === String(action.data.id) ? action.data : it
+      );
+         
+    }
+    case "DELETE": {
+      return state.filter((it) => String(it.id) !== String(action.targetId));
+    }
+    return state;
+  }
+}
+
+export const DiaryStateContext = React.createContext(); //일기 데이터 관리 Context
+export const DiaryDispatchContext = React.createContext(); //일기 데이터 관리 Context
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+  const [isDataLoaded, setIsDataLoaded] = useState(false); //데이터 로딩 상태
+  const [data, dispatch] = useReducer(reducer, []);
+  const idRef = useRef(0);
+  
+  useEffect(() => {
+    dispatch({
+      type: "INIT",
+      data: mockData,
+    });
+    setIsDataLoaded(true); //데이터 로딩 완료
+  }, []);
+
+  const onCreate = (date, content, emotionId) => {
+    dispatch({
+      type: "CREATE",
+      data: {
+        id: idRef.current,
+        date: new Date(date).getTime(),
+        content,
+        emotionId,
+      },
+    });
+    idRef.current += 1;
+  };
+
+  //업데이트 기능
+  const onUpdate = (targetId, date, content, emotionId) => {
+    dispatch({
+      type: "UPDATE",
+      data: {
+        id: targetId,
+        date: new Date(date).getTime(),
+        content,
+        emotionId,
+      },
+    });
+  };
+
+  //삭제 기능
+  const onDelete = (targetId) => {
+    dispatch({
+      type: "DELETE",
+      targetId,
+      });
+    };
+
+    const mockData = [
+      {
+        id: "mock1",
+        date : new Date().getTime(),
+        content: "mock1",
+        emotionId: 1
+      },
+      {
+        id: "mock2",
+        date : new Date().getTime(),
+        content: "mock2",
+        emotionId: 2
+      },
+      {
+        id: "mock3",
+        date : new Date().getTime(),
+        content: "mock3",
+        emotionId: 3
+      },
+    ];
+
+    if (!isDataLoaded) {
+      return <div> Loading... </div>;
+    }else {
+      return (
+        <DiaryStateContext.Provider value={data}>
+          <DiaryDispatchContext.Provider
+            value={{ onCreate, onUpdate, onDelete }} >
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/new" element={<New />} />
+            <Route path="/diary/:id" element={<Diary />} />
+            <Route path="/edit/:id" element={<Edit />} />
+          </Routes>
+        </div>
+        </DiaryDispatchContext.Provider>
+        </DiaryStateContext.Provider>
+        
+      );
+    }
+  }
 
 export default App;
