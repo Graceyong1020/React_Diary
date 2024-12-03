@@ -1,5 +1,5 @@
 import "./Editor.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; //useCallback: 함수를 캐싱하여 재사용 -> 성능 최적화
 import { emotionList, getFormattedDate } from "../util";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom"; //useNavigate hook 추가: Reset 버튼 클릭 시 홈으로 이동
@@ -50,12 +50,12 @@ const Editor = ({ initData, onSubmit }) => {
   };
 
   //감정 선택 섹션
-  const handleChangeEmotion = (emotionId) => {
-    setState({
+  const handleChangeEmotion = useCallback((emotionId) => {
+    setState((state) => ({
       ...state,
       emotionId,
-    });
-  };
+    }));
+  }, []); //useCallback으로 함수 캐싱
 
   return (
     <div className="Editor">
